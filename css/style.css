@@ -1,0 +1,63 @@
+@import url("reset.css");
+
+@font-face {
+    font-family: 'pacfontregular';
+    src: url('pacfont/pac-font-webfont.woff2') format('woff2'),
+         url('pacfont/pac-font-webfont.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
+body{
+  font-size: 56px;
+}
+
+h1{
+  font-family:'pacfontregular';
+  font-size:3rem;
+  color:rgb(211, 211, 104);
+  padding: 1rem 1rem;
+}
+
+p{
+  font-size: 1rem;
+  font-family:'pacfontregular';
+  color: rgb(21, 150, 224);
+}
+
+#canvas{
+  border:1px solid rgb(255, 255, 255);
+}
+
+img.pacman-logo{
+  width:5rem;
+}
+
+.container{
+  max-width: 33rem;
+  list-style: none;
+  
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
+  
+  /* -webkit-flex-flow: row wrap; */
+  justify-content: center;
+  flex-wrap: wrap;
+  align-items: center;
+  background: black;
+  padding:2rem 1rem;
+}
+
+.hero-decorator{
+  font-family:'pacfontregular';
+  font-size:3rem;
+  color:rgb(211, 211, 104);
+}
+
+.author-text{
+  paddint-top:2rem;
+}
