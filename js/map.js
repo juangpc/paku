@@ -1,7 +1,7 @@
 function Map(mapIndex, cW, cH) {
 
   this.index = mapIndex;
-  this.inputMatrix= config.maps[this.index];
+  this.inputMatrix = config.maps[this.index];
 
   this.cW = cW;
   this.cH = cH;
@@ -9,14 +9,17 @@ function Map(mapIndex, cW, cH) {
   this.nStepsH = config.stepsH;
   this.stepW = Math.round(cW / this.nStepsW);
   this.stepH = Math.round(cH / this.nStepsH);
-  this.corrW = (cW / this.nStepsW - this.stepW);
-  this.corrH = (cH / this.nStepsH - this.stepH);
+  //this.corrW = (cW / this.nStepsW - this.stepW);
+  //this.corrH = (cH / this.nStepsH - this.stepH);
 
   this.backgroundColor = config.backgroundColor;
   this.wallColor = config.mapsColors[this.index];
   this.coinColor = config.coinColor;
 
   this.initMap();
+
+  this.nCoins = this.countCoins();
+
 }
 
 Map.prototype.initMap = function () {
@@ -24,10 +27,15 @@ Map.prototype.initMap = function () {
   this.inputMatrix.forEach(function (row) {
     map.push(row.concat(row.slice(0).reverse()));
   });
-  this.matrix=map;
+  this.matrix = map;
+  this.matrixOnGame = map;
   if (config.debug) {
     console.log("map loaded");
   }
+}
+
+Map.prototype.clearMap = function (ctx) {
+  ctx.clearRect(0, 0, this.cW, this.cH);
 }
 
 Map.prototype.draw = function (ctx) {
@@ -71,4 +79,15 @@ Map.prototype.draw = function (ctx) {
 
   ctx.restore();
 
+}
+
+Map.prototype.countCoins = function () {
+  let nCoins = 0;
+  for (let hi = 0; hi < this.nStepsH; hi++) {
+    for (let wi = 0; wi < this.nStepsW; wi++) {
+      if (this.matrix[hi][wi] === 1)
+        nCoins++;
+    }
+  }
+  return nCoins;
 }

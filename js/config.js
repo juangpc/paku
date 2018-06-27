@@ -7,8 +7,13 @@ var config = {
 
   // game configuration
   // level 0  1   2   3
-  speeds: [0, 5, 10, 20],
+  speedArr: [0, 5, 10, 20],
   coinValue: 10,
+  initPlayMode:'single',
+  initLevel:0,
+  initLifes:4,
+  maxLifes:6,
+  numGohsts:3,
 
   p1KeyBindings: {
     up: 38,
@@ -30,7 +35,7 @@ var config = {
   stepsW: 28, //even always
   stepsH: 31, //odd always
   menuBGColor:'rgba(0, 0, 0, 0.8)',
-  fontColor:'#ffc5ff',
+  fontColor:'rgb(211, 211, 104)',
   fontFamily:'pacfontregular',
   fontSize:'3rem',
   backgroundColor: '#000000',
@@ -118,5 +123,5 @@ var config = {
 
 }
 
- 
+ var sound = new Audio('sounds/pacman_beginning.wav');
  
