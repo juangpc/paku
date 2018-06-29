@@ -11,6 +11,7 @@ var config = {
   coinValue: 10,
   initLevel:0,
   initLives:4,
+  levelMax:1,
   maxLifes:6,
   pacmanColor:'#FFFF00',
   numGhosts:4,

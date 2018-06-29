@@ -1,10 +1,12 @@
 function Game(canvasId) {
   this.canvasId = canvasId;
   this.initGame();
+  this.numGhosts = 0;
+  this.animationID = 0;
 }
 
 Game.prototype.initGame = function () {
-  var g=[];
+  var g = [];
   this.canvas = document.getElementById(this.canvasId);
   this.ctx = this.canvas.getContext("2d");
 
@@ -12,18 +14,21 @@ Game.prototype.initGame = function () {
   this.map.setGrid(config.stepsW, config.stepsH);
   this.map.setBGColor(config.backgroundColor);
   this.map.setCoinColor(config.coinColor);
+  this.ncoins = this.map.countCoins();
   this.initSound();
 
-  this.pacman = new Pacman(this.ctx,this.map.stepW*7/8,config.pacmanColor);
+  this.pacman = new Pacman(this.ctx, this.map.stepW * 7 / 8, config.pacmanColor);
   this.pacman.setGrid(this.map.stepW, this.map.stepH);
-  
-  for (var ng = 0; ng < config.numGhosts; ng++) {
-    g[ng] = new Ghost(this.ctx,this.map.stepW*9/5,config.colorGhosts[ng]);
+
+  this.numGhosts = config.numGhosts;
+  for (var ng = 0; ng < this.numGhosts; ng++) {
+    g[ng] = new Ghost(this.ctx, this.map.stepW * 9 / 5, config.colorGhosts[ng]);
     g[ng].setGrid(this.map.stepW, this.map.stepH);
   }
-  this.ghosts=g;
+  this.ghosts = g;
   this.score = 0;
   this.lives = config.initLives;
+  this.levelMax = config.levelMax;
 }
 
 Game.prototype.initSound = function () {
@@ -57,13 +62,19 @@ Game.prototype.startMenu = function () {
 
 Game.prototype.initLevel = function (level) {
   this.level = level;
-  this.speed=config.speedArr[this.level];
+  this.speed = config.speedArr[this.level];
   this.map.setWallColor(config.mapsColors[this.level]);
   this.map.setMap(config.maps[this.level], true);
-  this.initPosPacman = this.map.getInitPosPacman();
-  this.initPosGhosts = this.map.getInitPosGhosts();
-  this.teletransL = this.map.getTeletransL();
-  this.teletransR = this.map.getTeletransR();
+  this.pacman.initPos = this.map.getInitPosPacman();
+  this.pacman.teletransL = this.map.getTeletransL();
+  this.pacman.teletransR = this.map.getTeletransR();
+  this.pacman.map = this.map.map;
+
+  for (var ng = 0; ng < this.numGhosts; ng++) {
+    this.ghosts[ng].initPos = this.map.getInitPosGhosts();
+    this.ghosts[ng].map = this.map.map;
+  }
+
 }
 
 Game.prototype.setMenuListeners = function () {
@@ -91,7 +102,7 @@ Game.prototype.startGame = function () {
   this.pacman.draw();
 
   this.ghosts.forEach(function (g) {
-    g.setPosGrid(this.initPosGhosts[0] + Math.floor(Math.random() * 3) - 1, this.initPosGhosts[1])
+    g.setPosGrid(g.initPos[0] + Math.floor(Math.random() * 3) - 1, g.initPos[1]);
   }.bind(this));
   this.ghosts.forEach(function (g) {
     g.draw();
@@ -104,16 +115,16 @@ Game.prototype.setGameListeners = function () {
   document.addEventListener("keydown", function (event) {
     switch (event.keyCode) {
       case config.p1KeyBindings.up:
-        turnUp = true;
+        this.pacman.turn('up', this.map);
         break;
       case config.p1KeyBindings.down:
-        turnDown = true;
+        this.pacman.turn('down')
         break;
       case config.p1KeyBindings.right:
-        turnRight = true;
+        this.pacman.turn('right')
         break;
       case config.p1KeyBindings.left:
-        turnLeft = true;
+        this.pacman.turn('left')
         break;
     }
   });
@@ -125,31 +136,37 @@ Game.prototype.unsetListeners = function () {
 
 Game.prototype.mainAnimation = function () {
   var firstTurn = 1;
-  var prevTime=0;
+  var prevTime = 0;
   function animate(timeStamp) {
 
     prevTime = firstTurn * (timeStamp - 17) + !firstTurn * prevTime;
-    step = this.speed * (timeStamp - prevTime)/1000;
+    step = this.speed * (timeStamp - prevTime) / 1000;
     prevTime = timeStamp;
-    furstTurn=0;
+    furstTurn = 0;
 
     this.map.clearMap();
     this.map.drawMap();
 
-    this.pacman.update(step);
-    this.ghosts.forEach(function(g){
-      g.update(step);
+    this.pacman.update(step, this.map.grid2pos);
+    this.ghosts.forEach(function (g) {
+      g.update(step, this.map);
+      g.checkIntersection();
+      g.updateEyes(this.pacman);
     })
-    this.pacman.setPos(initPosX, initPosY);
-    this.pacman.draw();
 
-    this.ghosts.forEach(function (g) {
-      g.setPosGrid(initPosGhosts[0] + Math.floor(Math.random() * 3) - 1, initPosGhosts[1])
-    });
-    this.ghosts.forEach(function (g) {
-      g.draw();
-    });
-    
+    if (this.map.collectCoin(this.pacman)) {
+      this.ncoins--;
+      this.sound.chomp.play();
+    }
+
+    this.checkCollision();
+
+    //si es estrella cambia ojos de ghosts y movimiento
+    //hullen de pacman 
+    //mas velocidad pacman
+
+    //update score
+
     requestAnimationFrame(animate.bind(this));
   };
 
@@ -157,215 +174,32 @@ Game.prototype.mainAnimation = function () {
 
 }
 
+Game.prototype.checkCollision = function () {
+  this.ghosts.forEach(function (g) {
+    if (g.xg == this.pacman.xg &&
+      g.yg == this.pacman.yg) {
+      window.cancelAnimationFrame(this.animationID);
+      this.unsetListeners();
+      this.lives--;
+      this.sound.death.play();
+    }
+    if (this.lives > 0)
+      this.startGame();
+    else
+      console.log("the end!!!");
+  });
+}
 
-
-
-
-
-
-
-
-
-
-// Game.prototype.drawPacmanInMenu = function (mode) {
-//   this.ctx.save();
-//   this.ctx.fillStyle = '#FFFF00';
-//   this.ctx.font = "1.7rem pacfontregular";
-//   if (mode == "single") {
-//     this.ctx.fillText("1", this.canvas.width * 1.5 / 12, this.canvas.height * 5 / 12);
-//   } else if (mode == "double") {
-//     this.ctx.fillText("1", this.canvas.width * 1.5 / 12, this.canvas.height * 7 / 12);
-//   }
-//   this.ctx.restore();
-// }
-
-
-//   this.score = new Score();
-//   this.initMap(this.level);
-//   this.initSound(this.level);
-//   this.selectPlayMode();
-// }
-
-// Game.prototype.selectPlayMode = function () {
-//   this.setMenuListeners();
-//   this.map.clearMap(this.ctx);
-//   this.map.draw(this.ctx);
-//   this.drawPlayModeMenu();
-// }
-
-// Game.prototype.drawPlayModeMenu = function () {
-//   this.ctx.save();
-//   this.ctx.fillStyle = this.menuBGColor;
-//   this.ctx.fillRect(this.canvas.width * 1 / 12,
-//     this.canvas.height * 4 / 12, this.canvas.width * 10 / 12, this.canvas.height * 4 / 12);
-//   this.ctx.fillStyle = config.fontColor;
-//   this.ctx.font = "1.7rem pacfontregular";
-//   this.ctx.fillText("single player", this.canvas.width * 2.5 / 12, this.canvas.height * 5 / 12);
-//   this.ctx.fillText("double player", this.canvas.width * 2.5 / 12, this.canvas.height * 7 / 12);
-//   this.ctx.restore();
-//   this.drawPacmanInMenu(this.playMode);
-// }
-
-// Game.prototype.drawPacmanInMenu = function (mode) {
-//   this.ctx.save();
-//   this.ctx.fillStyle = '#FFFF00';
-//   this.ctx.font = "1.7rem pacfontregular";
-//   if (mode == "single") {
-//     this.ctx.fillText("1", this.canvas.width * 1.5 / 12, this.canvas.height * 5 / 12);
-//   } else if (mode == "double") {
-//     this.ctx.fillText("1", this.canvas.width * 1.5 / 12, this.canvas.height * 7 / 12);
-//   }
-//   this.ctx.restore();
-// }
-
-
-
-// Game.prototype.initLevel = function () {
-//   this.score.updateScore();
-//   this.speedPxSec = config.speedArr[level];
-//   this.setGameListeners();
-//   if(this.mode=='single'){
-//     this.player1 = new Player('pac','human',);
-//     this.ghosts=[];
-//     this.ghosts.push(new Player('ghost'))
-//   }else if(this.mode=='double'){
-
-//   }
-// }
-
-// Game.prototype.startGame = function () {
-//   this.initLevel();
-//   this.animate();
-// }
-
-
-// Game.prototype.updatePlayers = function () {
-
-// }
-
-// Game.prototype.computeCollisions = function () {
-
-// }
-
-
-// Game.prototype.animate = function () {
-//   let prevTime = Date.now();
-//   function calcStep(speed, timeStamp, prevTime) {
-//     return speed * (timeStamp - prevTime) / 1000;
-//   }
-
-//   this.map.clearMap(this.ctx);
-//   this.map.draw(this.ctx);
-
-//   function animate(timeStamp) {
-//     this.step = calcStep(this.speedPxSec, timeStamp, prevTime);
-//     prevTime = timeStamp;
-
-//     //this.updatePlayers();
-//     //this.computeCollisions();
-//     //this.updateScore();
-
-//     requestAnimationFrame(animate);
-//   }
-
-//   requestAnimationFrame(animate);
-
-// }
-
-
-// 
-
-
-
-// Game.prototype.setGameListeners = function () {
-//   if (this.mode == 'single') {
-//     document.addEventListener("keydown", function (event) {
-//       switch (event.keyCode) {
-//         case config.p1KeyBindings.up:
-//           this.player1.speedX = 0;
-//           this.player1.speedY = -1;
-//           break;
-//         case config.p1KeyBindings.down:
-//           this.player1.speedX = 0;
-//           this.player1.speedY = 1;
-//           break;
-//         case config.p1KeyBindings.right:
-//           this.player1.speedX = 1;
-//           this.player1.speedY = 0;
-//           break;
-//         case config.p1KeyBindings.left:
-//           this.player1.speedX = -1;
-//           this.player1.speedY = 0;
-//           break;
-//       }
-//     }.bind(this));
-//   } else if (this.mode == 'double') {
-//     document.addEventListener("keydown", function (event) {
-//       switch (event.keyCode) {
-//         case config.p1KeyBindings.up:
-//           this.player1.speedX = 0;
-//           this.player1.speedY = -1;
-//           break;
-//         case config.p1KeyBindings.down:
-//           this.player1.speedX = 0;
-//           this.player1.speedY = 1;
-//           break;
-//         case config.p1KeyBindings.right:
-//           this.player1.speedX = 1;
-//           this.player1.speedY = 0;
-//           break;
-//         case config.p1KeyBindings.left:
-//           this.player1.speedX = -1;
-//           this.player1.speedY = 0;
-//           break;
-//         case config.p2KeyBindings.up:
-//           this.player2.speedX = 0;
-//           this.player2.speedY = -1;
-//           break;
-//         case config.p2KeyBindings.down:
-//           this.player2.speedX = 0;
-//           this.player2.speedY = 1;
-//           break;
-//         case config.p2KeyBindings.right:
-//           this.player2.speedX = 1;
-//           this.player2.speedY = 0;
-//           break;
-//         case config.p2KeyBindings.left:
-//           this.player2.speedX = -1;
-//           this.player2.speedY = 0;
-//           break;
-//       }
-//     }.bind(this));
-//   }
-// }
-
-// Game.prototype.unSetGameListeners = function () {
-//   document.removeEventListener("keydown", null);
-// }
-
-//   /////////////////////////////////////////////////////////////////////
-//   ///////////////     SCORE OBJECT
-//   ////////////////////////////////////////////////////////////////////
-
-//   function Score() {
-//         this.globalScore = 0;
-//         this.nLifesLeft = config.initLifes;
-//         this.gameScore = {
-//           score: 0,
-//           coinsLeft: 0/////
-//         }
-//       }
-
-//   Score.prototype.newLevel = function () {
-
-//       }
-
-//   Score.prototype.addScore = function () {
-
-//       }
-
-//   Score.prototype.initScoreLevel = function () {
-//         this.gameScore.score = 0;
-//         this.gameScore.coinsLeft = 0;
-//       }
-
+Game.prototype.checkEndLevel = function () {
+  if (this.ncoins <= 0) {
+    window.cancelAnimationFrame(this.animationID);
+    this.unsetListeners();
+    this.level++;
+    if (this.level == this.levelMax) {
+      console.log("final de juego!!");
+    } else {
+      this.initLevel(++this.level);
+      this.startGame();
+    }
+  }
+}

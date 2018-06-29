@@ -28,16 +28,3 @@ window.onload = function () {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
