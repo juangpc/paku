@@ -7,7 +7,7 @@ function Player(ctx, size, color) {
   this.xg = undefined;
   this.yg = undefined;
   //speeds
-  this.sx = 0;
+  this.sx = 1;
   this.sy = 0;
   this.map = undefined;
   this.stepW = undefined;
@@ -38,7 +38,7 @@ Player.prototype.setPosGrid = function (xg, yg) {
   this.y = yg * this.stepH + this.stepH * 5 / 8;
 }
 
-Player.prototype.turn = function (dir) {
+Player.prototype.turn = function (dir,map) {
   let x = this.x;
   let y = this.y;
   let xg = this.xg;
@@ -48,35 +48,35 @@ Player.prototype.turn = function (dir) {
 
   switch (dir) {
     case "up":
-      if (this.map[yg - 1][xg] == 1 ||
-        this.map[yg - 1][xg] == 2 ||
-        this.map[yg - 1][xg] == 3 ||
-        this.map[yg - 1][xg] == 5 ||
-        this.map[yg - 1][xg] == 7) {
+      if (map.map[yg - 1][xg] == 1 ||
+        map.map[yg - 1][xg] == 2 ||
+        map.map[yg - 1][xg] == 3 ||
+        map.map[yg - 1][xg] == 5 ||
+        map.map[yg - 1][xg] == 7) {
         sx = 0;
         sy = -1;
-        //pmanX = this.map.grid2pos(xg, this.stepW);
-        //pmanY = this.map.grid2pos(yg, this.stepH);
+        //pmanX = map.map.grid2pos(xg, map.stepW);
+        //pmanY = map.map.grid2pos(yg, map.stepH);
       }
       break;
     case "down":
-      if (this.map[yg + 1][xg] == 1 ||
-        this.map[yg + 1][xg] == 2 ||
-        this.map[yg + 1][xg] == 3 ||
-        this.map[yg + 1][xg] == 5 ||
-        this.map[yg + 1][xg] == 7) {
+      if (map.map[yg + 1][xg] == 1 ||
+        map.map[yg + 1][xg] == 2 ||
+        map.map[yg + 1][xg] == 3 ||
+        map.map[yg + 1][xg] == 5 ||
+        map.map[yg + 1][xg] == 7) {
         sx = 0;
         sy = 1;
-        //pmanX=this.map.grid2pos(xg,stepW);
-        //pmanY=this.map.grid2pos(yg,stepH);
+        //pmanX=map.map.grid2pos(xg,stepW);
+        //pmanY=map.map.grid2pos(yg,stepH);
       }
       break;
     case "right":
-      if (this.map[yg][xg + 1] == 1 ||
-        this.map[yg][xg + 1] == 2 ||
-        this.map[yg][xg + 1] == 3 ||
-        this.map[yg][xg + 1] == 5 ||
-        this.map[yg][xg + 1] == 7) {
+      if (map.map[yg][xg + 1] == 1 ||
+        map.map[yg][xg + 1] == 2 ||
+        map.map[yg][xg + 1] == 3 ||
+        map.map[yg][xg + 1] == 5 ||
+        map.map[yg][xg + 1] == 7) {
         sx = 1;
         sy = 0;
         //pmanX=grid2pos(xg,stepW);
@@ -84,11 +84,11 @@ Player.prototype.turn = function (dir) {
       }
       break;
     case "left":
-      if (this.map[yg][xg - 1] == 1 ||
-        this.map[yg][xg - 1] == 2 ||
-        this.map[yg][xg - 1] == 3 ||
-        this.map[yg][xg - 1] == 5 ||
-        this.map[yg][xg - 1] == 7) {
+      if (map.map[yg][xg - 1] == 1 ||
+        map.map[yg][xg - 1] == 2 ||
+        map.map[yg][xg - 1] == 3 ||
+        map.map[yg][xg - 1] == 5 ||
+        map.map[yg][xg - 1] == 7) {
         sx = -1;
         sy = 0;
         //pmanX = grid2pos(xg, stepW);
@@ -135,7 +135,7 @@ Pacman.prototype.draw = function () {
   }
 }
 
-Pacman.prototype.update = function (step, fGrid2pos) {
+Pacman.prototype.update = function (step, map) {
   let sx = this.sx;
   let sy = this.sy;
   let xg = this.xg; //postitions in grid
@@ -153,8 +153,8 @@ Pacman.prototype.update = function (step, fGrid2pos) {
     this.map[yg + sy][xg + sx] == 3 ||
     this.map[yg + sy][xg + sx] == 5 ||
     this.map[yg + sy][xg + sx] == 7) ||
-    ((sx * (x - fGrid2pos(xg, this.stepW)) <= 0) &&
-      (sy * (y - fGrid2pos(yg, this.stepH)) <= 0))) {
+    ((sx * (x - map.grid2pos(xg, this.stepW)) <= 0) &&
+      (sy * (y - map.grid2pos(yg, this.stepH)) <= 0))) {
     this.x = x;
     this.y = y;
     this.xg = xg;
@@ -162,7 +162,7 @@ Pacman.prototype.update = function (step, fGrid2pos) {
   }
 
   this.updateMouth();
-  this.teletrans(fGrid2pos);
+  this.teletrans(map);
 }
 
 Pacman.prototype.updateMouth = function () {
@@ -173,19 +173,19 @@ Pacman.prototype.updateMouth = function () {
     this.moughClosing = true;
 }
 
-Pacman.prototype.teletrans = function (fGrid2pos) {
+Pacman.prototype.teletrans = function (map) {
   if (this.xg === this.teletransR[0] &&
     this.yg === this.teletransR[1]) {
     this.xg = this.teletransL[0];
     this.yg = this.teletransL[1];
-    this.x = fGrid2pos(this.xg, this.stepW);
-    this.y = fGrid2pos(this.yg, this.stepH);
+    this.x = map.grid2pos(this.xg, this.stepW);
+    this.y = map.grid2pos(this.yg, this.stepH);
   } else if (this.xg === this.teletransL[0] &&
     this.yg === this.teletransL[1]) {
     this.xg = this.teletransR[0];
     this.yg = this.teletransR[1];
-    this.x = fGrid2pos(this.xg, this.stepW);
-    this.y = fGrid2pos(this.yg, this.stepH);
+    this.x = map.grid2pos(this.xg, this.stepW);
+    this.y = map.grid2pos(this.yg, this.stepH);
   }
 }
 
@@ -198,7 +198,7 @@ function Ghost(ctx, size, color) {
   this.eyesX = 0;
   this.eyesY = 0;
   this.changeDirInterval = 10000;
-  window.setTimeInterval(this.turn().bind(this), this.changeDirInterval);
+  //window.setTimeInterval(this._proto_.turn().bind(this), this.changeDirInterval);
 }
 
 Ghost.prototype = Object.create(Player.prototype);
@@ -245,7 +245,7 @@ Ghost.prototype.setGhostEyesDir = function (eyesX, eyesY) {
   this.eyesY = eyesY;
 }
 
-Ghost.prototype.update = function (step, fGrid2pos) {
+Ghost.prototype.update = function (step, map) {
   let sx = this.sx;
   let sy = this.sy;
   let xg = this.xg; //postitions in grid
@@ -263,18 +263,24 @@ Ghost.prototype.update = function (step, fGrid2pos) {
     this.map[yg + sy][xg + sx] == 3 ||
     this.map[yg + sy][xg + sx] == 5 ||
     this.map[yg + sy][xg + sx] == 7) ||
-    ((sx * (x - fGrid2pos(xg, this.stepW)) <= 0) &&
-      (sy * (y - fGrid2pos(yg, this.stepH)) <= 0))) {
+    ((sx * (x - map.grid2pos(xg, this.stepW)) <= 0) &&
+      (sy * (y - map.grid2pos(yg, this.stepH)) <= 0))) {
     this.x = x;
     this.y = y;
     this.xg = xg;
     this.yg = yg;
   }
 
-  //update eyes.
 }
 
 Ghost.prototype.checkIntersection = function () {
+  let sx = this.sx;
+  let sy = this.sy;
+  let xg = this.xg; //postitions in grid
+  let yg = this.yg;
+  let x = this.x; //positions in xy plane
+  let y = this.y;
+
   let possibleDirs = [];
   if ((this.map[yg + 1][xg] == 1 ||
     this.map[yg + 1][xg] == 2 ||

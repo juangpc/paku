@@ -1,8 +1,6 @@
 function Game(canvasId) {
   this.canvasId = canvasId;
   this.initGame();
-  this.numGhosts = 0;
-  this.animationID = 0;
 }
 
 Game.prototype.initGame = function () {
@@ -14,7 +12,6 @@ Game.prototype.initGame = function () {
   this.map.setGrid(config.stepsW, config.stepsH);
   this.map.setBGColor(config.backgroundColor);
   this.map.setCoinColor(config.coinColor);
-  this.ncoins = this.map.countCoins();
   this.initSound();
 
   this.pacman = new Pacman(this.ctx, this.map.stepW * 7 / 8, config.pacmanColor);
@@ -62,19 +59,20 @@ Game.prototype.startMenu = function () {
 
 Game.prototype.initLevel = function (level) {
   this.level = level;
+  
   this.speed = config.speedArr[this.level];
   this.map.setWallColor(config.mapsColors[this.level]);
   this.map.setMap(config.maps[this.level], true);
   this.pacman.initPos = this.map.getInitPosPacman();
   this.pacman.teletransL = this.map.getTeletransL();
   this.pacman.teletransR = this.map.getTeletransR();
-  this.pacman.map = this.map.map;
+  this.pacman.map = this.map.map; //ugly!!
 
   for (var ng = 0; ng < this.numGhosts; ng++) {
     this.ghosts[ng].initPos = this.map.getInitPosGhosts();
     this.ghosts[ng].map = this.map.map;
   }
-
+  this.ncoins = this.map.countCoins();
 }
 
 Game.prototype.setMenuListeners = function () {
@@ -92,8 +90,8 @@ Game.prototype.unSetMenuListeners = function () {
 }
 
 Game.prototype.startGame = function () {
-  let initPosX = this.map.grid2pos(this.initPosPacman[0], this.map.stepW) + this.map.stepW / 2;
-  let initPosY = this.map.grid2pos(this.initPosPacman[1], this.map.stepH);
+  let initPosX = this.map.grid2pos(this.pacman.initPos[0], this.map.stepW) + this.map.stepW / 2;
+  let initPosY = this.map.grid2pos(this.pacman.initPos[1], this.map.stepH);
 
   this.map.clearMap();
   this.map.drawMap();
@@ -107,7 +105,7 @@ Game.prototype.startGame = function () {
   this.ghosts.forEach(function (g) {
     g.draw();
   }.bind(this));
-  window.setTimeout(this.mainAnimation.bind(this), 3500);
+  window.setTimeout(this.mainAnimation.bind(this), 2000);
   this.setGameListeners();
 }
 
@@ -118,16 +116,16 @@ Game.prototype.setGameListeners = function () {
         this.pacman.turn('up', this.map);
         break;
       case config.p1KeyBindings.down:
-        this.pacman.turn('down')
+        this.pacman.turn('down', this.map)
         break;
       case config.p1KeyBindings.right:
-        this.pacman.turn('right')
-        break;
+        this.pacman.turn('right', this.map)
+        break;s
       case config.p1KeyBindings.left:
-        this.pacman.turn('left')
+        this.pacman.turn('left', this.map)
         break;
     }
-  });
+  }.bind(this));
 }
 
 Game.prototype.unsetListeners = function () {
@@ -147,12 +145,12 @@ Game.prototype.mainAnimation = function () {
     this.map.clearMap();
     this.map.drawMap();
 
-    this.pacman.update(step, this.map.grid2pos);
+    this.pacman.update(step, this.map);
     this.ghosts.forEach(function (g) {
       g.update(step, this.map);
       g.checkIntersection();
       g.updateEyes(this.pacman);
-    })
+    }.bind(this))
 
     if (this.map.collectCoin(this.pacman)) {
       this.ncoins--;
@@ -187,7 +185,7 @@ Game.prototype.checkCollision = function () {
       this.startGame();
     else
       console.log("the end!!!");
-  });
+  }.bind(this));
 }
 
 Game.prototype.checkEndLevel = function () {

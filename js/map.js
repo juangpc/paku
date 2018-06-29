@@ -149,13 +149,11 @@ Map.prototype.grid2pos = function (p, step) {
 
 Map.prototype.countCoins = function () {
   let ncoins = 0;
-  for (let hi = 0; hi < this.nStepsH; hi++) {
-    for (let wi = 0; wi < this.nStepsW; wi++) {
-      if (this.map[hi][wi] === this.mapCode['path_star']) {
-        ncoins++
-      }
-    }
-  }
+  for (let hi = 0; hi < this.nStepsH; hi++) 
+    for (let wi = 0; wi < this.nStepsW; wi++) 
+      if (this.map[hi][wi] === this.mapCode['path_star']) 
+        ncoins++;
+        
   return ncoins;
 }
 
