@@ -14,11 +14,11 @@ Game.prototype.initGame = function () {
   this.map.setCoinColor(config.coinColor);
   this.initSound();
 
-  this.pacman = new Pacman(this.ctx, config.pacmanColor);
+  this.pacman = new Pacman(this.ctx,this.map.stepW*7/8,config.pacmanColor);
   this.pacman.setGrid(this.map.stepW, this.map.stepH);
   
   for (var ng = 0; ng < config.numGhosts; ng++) {
-    g[ng] = new Ghost(this.ctx, config.colorGhosts[ng]);
+    g[ng] = new Ghost(this.ctx,this.map.stepW*9/5,config.colorGhosts[ng]);
     g[ng].setGrid(this.map.stepW, this.map.stepH);
   }
   this.ghosts=g;
@@ -44,6 +44,7 @@ Game.prototype.startMenu = function () {
   this.map.clearMap();
   this.map.drawMap(); //as background
 
+  this.setMenuListeners();
   this.ctx.save();
   this.ctx.fillStyle = config.menuBGColor;
   this.ctx.fillRect(this.canvas.width * 1 / 12,
@@ -80,8 +81,8 @@ Game.prototype.unSetMenuListeners = function () {
 }
 
 Game.prototype.startGame = function () {
-  let initPosX = this.map.grid2pos(this.initPosPacman[0], this.stepW) + this.stepW / 2;
-  let initPosY = this.map.grid2pos(this.initPosPacman[1], this.stepH);
+  let initPosX = this.map.grid2pos(this.initPosPacman[0], this.map.stepW) + this.map.stepW / 2;
+  let initPosY = this.map.grid2pos(this.initPosPacman[1], this.map.stepH);
 
   this.map.clearMap();
   this.map.drawMap();
@@ -90,16 +91,16 @@ Game.prototype.startGame = function () {
   this.pacman.draw();
 
   this.ghosts.forEach(function (g) {
-    g.setPosGrid(initPosGhosts[0] + Math.floor(Math.random() * 3) - 1, initPosGhosts[1])
-  });
+    g.setPosGrid(this.initPosGhosts[0] + Math.floor(Math.random() * 3) - 1, this.initPosGhosts[1])
+  }.bind(this));
   this.ghosts.forEach(function (g) {
     g.draw();
-  });
-  window.setTimeout(this.mainAnimation, 4000);
+  }.bind(this));
+  window.setTimeout(this.mainAnimation.bind(this), 3500);
   this.setGameListeners();
 }
 
-Game.prototype.setListeners = function () {
+Game.prototype.setGameListeners = function () {
   document.addEventListener("keydown", function (event) {
     switch (event.keyCode) {
       case config.p1KeyBindings.up:
@@ -124,10 +125,10 @@ Game.prototype.unsetListeners = function () {
 
 Game.prototype.mainAnimation = function () {
   var firstTurn = 1;
-  
+  var prevTime=0;
   function animate(timeStamp) {
 
-    let prevTime = firstTurn * (timeStamp - 17) + !firstTurn * prevTime;
+    prevTime = firstTurn * (timeStamp - 17) + !firstTurn * prevTime;
     step = this.speed * (timeStamp - prevTime)/1000;
     prevTime = timeStamp;
     furstTurn=0;
@@ -149,12 +150,10 @@ Game.prototype.mainAnimation = function () {
       g.draw();
     });
     
-    //updateScore();
-    
-    requestAnimationFrame(animate);
-  }
+    requestAnimationFrame(animate.bind(this));
+  };
 
-  this.animationID = requestAnimationFrame(animate);
+  this.animationID = requestAnimationFrame(animate.bind(this));
 
 }
 

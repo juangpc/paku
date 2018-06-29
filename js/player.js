@@ -31,8 +31,8 @@ Player.prototype.setPos=function(x,y){
 Player.prototype.setPosGrid=function(xg,yg){
   this.xg=xg;
   this.yg=yg;
-  this.x=xg*this.stepW+stepW*5/8;
-  this.y=yg*this.stepH+stepH*5/8;
+  this.x=xg*this.stepW+this.stepW*5/8;
+  this.y=yg*this.stepH+this.stepH*5/8;
 }
 
 function Pacman(ctx,size,color){
@@ -46,9 +46,10 @@ Pacman.prototype.constructor = Pacman;
 Pacman.prototype.draw = function (){
   this.ctx.save();
   this.ctx.beginPath();
-  this.ctx.fillStyle = coinColor;
-  this.ctx.arc(x,y,stepW*7/8,Math.PI / 7,-Math.PI / 7,false);
-  this.ctx.lineTo(x,y,stepW*7/8)
+  this.ctx.fillStyle = this.color;
+  this.ctx.arc(this.x,this.y,this.size,
+    Math.PI / this.mouthIndex,-Math.PI / this.mouthIndex,false);
+  this.ctx.lineTo(this.x,this.y,this.size)
   this.ctx.fill();
   this.ctx.restore();
 }
@@ -68,9 +69,9 @@ Ghost.prototype.constructor = Ghost;
 Ghost.prototype.draw = function (){
   let size= this.size;
   let x = this.x - size/2;
-  let y = this.y - size/2;
+  let y = this.y + size/2;
   this.ctx.save();
-  this.ctx.fillStyle = color;
+  this.ctx.fillStyle = this.color;
   this.ctx.beginPath();
   this.ctx.moveTo(x, y);
   this.ctx.lineTo(x, y-size*2/5);
@@ -88,21 +89,24 @@ Ghost.prototype.draw = function (){
   //eyes
   this.ctx.fillStyle = 'white';
   this.ctx.beginPath();
-  this.//ctx.moveTo(x+size*2/10, y-size*5/10);
+  this.ctx.moveTo(x+size*2/10, y-size*5/10);
   this.ctx.ellipse(x+size/3, y-size/2, size/7, size/5, 0, 0, 2 * Math.PI);
   this.ctx.ellipse(x+size*2/3, y-size/2, size/7, size/5, 0, 0, 2 * Math.PI);
   this.ctx.fill();
   
   this.ctx.fillStyle = 'black';
   this.ctx.beginPath();
-  this.ctx.arc(x+size/3+eyeW*size/20,y-size/2+eyeH*size/20,size/20,0,Math.PI*2);
-  this.ctx.arc(x+size*2/3+eyeW*size/20,y-size/2+eyeH*size/20,size/20,0,Math.PI*2);
+  this.ctx.arc(x+size/3+this.eyesX*size/20,y-size/2+this.eyesY*size/20,size/20,0,Math.PI*2);
+  this.ctx.arc(x+size*2/3+this.eyesX*size/20,y-size/2+this.eyesY*size/20,size/20,0,Math.PI*2);
   this.ctx.fill();
   this.ctx.restore();
 
 }
 
-
+Ghost.prototype.setGhostEyesDir= function (eyesX,eyesY){
+  this.eyesX=eyesX;
+  this.eyesY=eyesY;
+}
 
 
 

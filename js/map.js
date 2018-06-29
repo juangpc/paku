@@ -112,7 +112,7 @@ Map.prototype.getInitPosGhosts = function () {
   for (let hi = 0; hi < this.nStepsH; hi++) {
     for (let wi = 0; wi < this.nStepsW; wi++) {
       if (this.map[hi][wi] === this.mapCode['door']) {
-        return [wi, hi-1];
+        return [wi, hi+2];
       }
     }
   }
